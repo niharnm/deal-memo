@@ -1,5 +1,8 @@
 import { eveChannel } from "eve/channels/eve";
-import { localDev, placeholderAuth, vercelOidc } from "eve/channels/auth";
+import { httpBasic, localDev, placeholderAuth, vercelOidc } from "eve/channels/auth";
+
+const username = process.env.ROUTE_AUTH_BASIC_USERNAME;
+const password = process.env.ROUTE_AUTH_BASIC_PASSWORD;
 
 export default eveChannel({
   auth: [
@@ -7,9 +10,8 @@ export default eveChannel({
     vercelOidc(),
     // Open on localhost for `eve dev` and the REPL; ignored in production.
     localDev(),
-    // This placeholder will not allow browser requests in production.
-    // Replace it with your app's auth provider, like Auth.js or Clerk,
-    // or use none() for a public demo.
+    // Shared demo login. Without both env vars, production stays closed.
+    ...(username && password ? [httpBasic({ username, password }, { realm: "Deal Memo" })] : []),
     placeholderAuth(),
   ],
 });

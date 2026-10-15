@@ -1,35 +1,78 @@
-# deal-memo
+# Deal Memo
 
-This is an [eve](https://eve.dev) agent bootstrapped with [`eve init`](https://eve.dev/docs/reference/cli#eve-init).
+Give it a startup and it writes an investment memo you could hand to a partner, with sources for every claim.
 
-## Getting started
+Paste a company URL, a name, or the text of a pitch deck. Four research agents work in parallel on the team, the market, the competition, and traction. A lead analyst then writes a structured memo: a scorecard, a competitor table, a funding history, risks with ways to de-risk them, questions for the founders, and a recommendation of take the meeting, track, or pass.
 
-First, run the development server:
+See [sample-memo-resend.md](./sample-memo-resend.md) for the output of a real run.
 
-```bash
-eve dev
+## How it works
+
+```
+                 ┌──────────────────────────┐
+  URL / deck ──▶ │  Lead analyst (root)     │ ──▶ memo (memo-template skill)
+                 └───┬─────┬──────┬─────┬───┘
+                     │     │      │     │   run in parallel as durable tasks
+                   team  market  comp  traction
+                     └─────┴──────┴─────┘
+                    web_search + web_fetch, cited sources
 ```
 
-The development TUI opens an interactive session where you can send messages to your agent.
+Built on [eve](https://eve.dev), Vercel's framework for durable agents:
 
-Start by editing `agent/instructions.md` to define the agent's identity, purpose, tone, and response guidelines. Configure its model and runtime behavior in `agent/agent.ts`.
+| Path | Purpose |
+| --- | --- |
+| `agent/instructions.md` | Lead analyst role, delegation flow, and sourcing rules |
+| `agent/skills/memo-template.md` | Memo format and scoring guide |
+| `agent/subagents/{team,market,competitors,traction}/` | Specialist researchers, each with its own instructions and web tools |
+| `agent/channels/eve.ts` | HTTP channel and route auth |
+| `app/` | Next.js web chat UI |
+| `evals/` | Checks that a run uses every specialist and produces every memo section |
 
-Add capabilities under `agent/`, including tools, connections, channels, skills, subagents, and schedules. eve reloads your changes as you work.
+Models run through [Vercel AI Gateway](https://vercel.com/ai-gateway) (`anthropic/claude-sonnet-5.5`). Locally that uses the linked project's OIDC token, so no provider API keys are needed.
 
-## Learn more
+## Run locally
 
-To learn more about eve, explore these resources:
-
-- [eve documentation](https://eve.dev/docs) — learn about eve's features and authoring APIs.
-- [Build an Agent tutorial](https://eve.dev/docs/tutorial/first-agent) — build and deploy an agent step by step.
-- [eve on GitHub](https://github.com/vercel/eve) — view the source and contribute.
-
-## Deploy on Vercel
-
-Deploy your agent to [Vercel](https://vercel.com) from the project root:
+Requires Node.js 24 or later and a linked Vercel project (for AI Gateway access).
 
 ```bash
-eve deploy
+npm install
+vercel link
+vercel env pull .env.local
+npm exec -- eve dev
 ```
 
-`eve deploy` links a Vercel project if needed and deploys the agent to production. See the [eve deployment documentation](https://eve.dev/docs/guides/deployment/vercel) for authentication, environment variables, and deployment options.
+`eve dev` opens a terminal chat with the agent. For the web UI, run `npm run dev` and open http://localhost:3000.
+
+## Evals
+
+```bash
+npm run eval
+```
+
+Each eval does a full research run on a real company, so expect a few minutes and some model usage per case.
+
+## Deploy
+
+The repo is connected to Vercel, so pushes to `main` deploy to production. To deploy by hand:
+
+```bash
+npm exec -- eve deploy
+```
+
+### Access control
+
+The production app sits behind a shared HTTP Basic login so only invited people can spend model credits. Set these on the Vercel project:
+
+| Variable | Purpose |
+| --- | --- |
+| `ROUTE_AUTH_BASIC_USERNAME` | Shared login username |
+| `ROUTE_AUTH_BASIC_PASSWORD` | Shared login password |
+
+If either is missing, production rejects every request.
+
+## Limits
+
+- Research covers public web sources only. Private metrics have to come from the founders.
+- A full memo takes about five to seven minutes.
+- Scores and the recommendation are model judgment, labeled as such in the memo, and are not investment advice.

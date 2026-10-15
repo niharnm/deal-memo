@@ -25,7 +25,8 @@ import { cn } from "@/lib/utils";
 import { AgentMessage } from "./agent-message";
 import { WEB_CHAT_AGENT } from "@/app/eve-agent";
 
-const DEFAULT_AGENT_NAME = "deal-memo";
+const DEFAULT_AGENT_NAME = "Deal Memo";
+const EXAMPLES = ["https://linear.app", "https://www.cursor.com", "https://resend.com"];
 const AGENT_NAME = WEB_CHAT_AGENT ?? DEFAULT_AGENT_NAME;
 
 export function AgentChat({
@@ -134,7 +135,7 @@ export function AgentChat({
       <PromptInputTextarea
         disabled={isResuming}
         onChange={(event) => setHasInputText(event.currentTarget.value.trim().length > 0)}
-        placeholder="Send a message…"
+        placeholder="Paste a startup URL, name, or deck text…"
       />
       <ComposerAction
         hasInputText={hasInputText}
@@ -201,9 +202,29 @@ export function AgentChat({
         {showConversationLayout ? null : (
           <div className="flex flex-col items-center gap-3 text-center">
             <h1 className="font-medium text-5xl tracking-tighter">{AGENT_NAME}</h1>
+            <p className="text-muted-foreground">
+              Startup in, partner-ready investment memo out. Four research agents work in
+              parallel on team, market, competition, and traction.
+            </p>
           </div>
         )}
         <div className="w-full">{composer}</div>
+        {showConversationLayout ? null : (
+          <div className="flex flex-wrap justify-center gap-2">
+            {EXAMPLES.map((example) => (
+              <Button
+                disabled={isResuming}
+                key={example}
+                onClick={() => void handleSubmit({ files: [], text: `Write a memo on ${example}` })}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                {example.replace(/^https:\/\/(www\.)?/, "")}
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );
