@@ -203,8 +203,8 @@ export function AgentChat({
           <div className="flex flex-col items-center gap-3 text-center">
             <h1 className="font-medium text-5xl tracking-tighter">{AGENT_NAME}</h1>
             <p className="text-muted-foreground">
-              Startup in, partner-ready investment memo out. Four research agents work in
-              parallel on team, market, competition, and traction.
+              Startup in, partner-ready investment memo out. Up to four research agents work
+              in parallel on team, market, competition, and traction.
             </p>
           </div>
         )}

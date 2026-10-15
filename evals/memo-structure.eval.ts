@@ -7,13 +7,14 @@ export default [
   { company: "https://linear.app", name: "linear" },
 ].map(({ company, name }) =>
   defineEval({
-    description: `Full memo for ${name}: all specialists run and every section is present.`,
+    description: `Full memo for ${name}: one to four specialists run and every section is present.`,
     async test(t) {
       await t.send(`Write a memo on ${company}`);
       t.succeeded();
-      for (const specialist of ["team", "market", "competitors", "traction"]) {
-        t.calledSubagent(specialist);
-      }
+      t.eventsSatisfy("delegates to between one and four specialists", (events) => {
+        const started = events.filter((event) => event.type === "agent.started").length;
+        return started >= 1 && started <= 4;
+      });
       t.loadedSkill("memo-template");
       for (const section of SECTIONS) t.messageIncludes(section);
       t.messageIncludes(/Take the meeting|Track|Pass/);

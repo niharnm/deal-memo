@@ -2,7 +2,7 @@
 
 Give it a startup and it writes an investment memo you could hand to a partner, with sources for every claim.
 
-Paste a company URL, a name, or the text of a pitch deck. Four research agents work in parallel on the team, the market, the competition, and traction. A lead analyst then writes a structured memo: a scorecard, a competitor table, a funding history, risks with ways to de-risk them, questions for the founders, and a recommendation of take the meeting, track, or pass.
+Paste a company URL, a name, or the text of a pitch deck. The lead analyst sends out as many research agents as the job needs, up to four, covering the team, the market, the competition, and traction in parallel. It then writes a structured memo: a scorecard, a competitor table, a funding history, risks with ways to de-risk them, questions for the founders, and a recommendation of take the meeting, track, or pass.
 
 See [sample-memo-resend.md](./sample-memo-resend.md) for the output of a real run.
 
@@ -12,7 +12,7 @@ See [sample-memo-resend.md](./sample-memo-resend.md) for the output of a real ru
                  ┌──────────────────────────┐
   URL / deck ──▶ │  Lead analyst (root)     │ ──▶ memo (memo-template skill)
                  └───┬─────┬──────┬─────┬───┘
-                     │     │      │     │   run in parallel as durable tasks
+                     │     │      │     │   as many as needed (max 4), in parallel
                    team  market  comp  traction
                      └─────┴──────┴─────┘
                     web_search + web_fetch, cited sources
@@ -27,7 +27,7 @@ Built on [eve](https://eve.dev), Vercel's framework for durable agents:
 | `agent/subagents/{team,market,competitors,traction}/` | Specialist researchers, each with its own instructions and web tools |
 | `agent/channels/eve.ts` | HTTP channel and route auth |
 | `app/` | Next.js web chat UI |
-| `evals/` | Checks that a run uses every specialist and produces every memo section |
+| `evals/` | Checks that a run uses one to four specialists and produces every memo section |
 
 Models run through [Vercel AI Gateway](https://vercel.com/ai-gateway) (`anthropic/claude-sonnet-5.5`). Locally that uses the linked project's OIDC token, so no provider API keys are needed.
 
