@@ -62,14 +62,13 @@ npm exec -- eve deploy
 
 ### Access control
 
-The production app sits behind a shared HTTP Basic login so only invited people can spend model credits. Set these on the Vercel project:
+The production app sits behind a single shared password so only invited people can spend model credits. Visitors enter it on `/login`, which sets a signed session cookie that both the web app and the agent API check.
 
 | Variable | Purpose |
 | --- | --- |
-| `ROUTE_AUTH_BASIC_USERNAME` | Shared login username |
-| `ROUTE_AUTH_BASIC_PASSWORD` | Shared login password |
+| `DEMO_PASSWORD` | Shared password for the login page |
 
-If either is missing, production rejects every request.
+If it's missing, production rejects every request. Changing it signs everyone out.
 
 ## Limits
 

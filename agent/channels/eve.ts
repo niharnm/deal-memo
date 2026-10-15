@@ -1,8 +1,12 @@
 import { eveChannel } from "eve/channels/eve";
-import { httpBasic, localDev, placeholderAuth, vercelOidc } from "eve/channels/auth";
+import { type AuthFn, localDev, placeholderAuth, vercelOidc } from "eve/channels/auth";
+import { hasValidSession } from "../lib/demo-auth";
 
-const username = process.env.ROUTE_AUTH_BASIC_USERNAME;
-const password = process.env.ROUTE_AUTH_BASIC_PASSWORD;
+// Accepts browser requests that carry the session cookie set by the password page.
+const demoSession: AuthFn<Request> = async (request) =>
+  (await hasValidSession(request.headers.get("cookie")))
+    ? { attributes: {}, authenticator: "demo-password", principalId: "demo", principalType: "user" }
+    : null;
 
 export default eveChannel({
   auth: [
@@ -10,8 +14,8 @@ export default eveChannel({
     vercelOidc(),
     // Open on localhost for `eve dev` and the REPL; ignored in production.
     localDev(),
-    // Shared demo login. Without both env vars, production stays closed.
-    ...(username && password ? [httpBasic({ username, password }, { realm: "Deal Memo" })] : []),
+    demoSession,
+    // Without DEMO_PASSWORD, production stays closed.
     placeholderAuth(),
   ],
 });

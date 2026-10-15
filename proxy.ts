@@ -1,27 +1,17 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { demoPassword, hasValidSession } from "./agent/lib/demo-auth";
 
-const REALM = "Deal Memo";
+const PUBLIC_PATHS = ["/login", "/api/login", "/icon.svg", "/apple-icon"];
 
-// Gates the whole app behind the same shared login the agent channel checks, so the
-// browser prompts once on page load and reuses the credential for agent requests.
-function isAuthorized(request: NextRequest): boolean {
-  const username = process.env.ROUTE_AUTH_BASIC_USERNAME;
-  const password = process.env.ROUTE_AUTH_BASIC_PASSWORD;
-  if (!username || !password) return process.env.NODE_ENV !== "production";
-
-  const header = request.headers.get("authorization");
-  if (!header?.startsWith("Basic ")) return false;
-  const decoded = atob(header.slice("Basic ".length));
-  const separator = decoded.indexOf(":");
-  return (
-    separator !== -1 &&
-    decoded.slice(0, separator) === username &&
-    decoded.slice(separator + 1) === password
-  );
+// Sends visitors without a valid session cookie to the password page. Local dev
+// stays open when DEMO_PASSWORD is unset; production fails closed.
+async function isAuthorized(request: NextRequest): Promise<boolean> {
+  if (!demoPassword()) return process.env.NODE_ENV !== "production";
+  return hasValidSession(request.headers.get("cookie"));
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const routerHost = process.env.VERCEL_URL;
   const forwardedHost = request.headers.get("x-forwarded-host");
   if (process.env.__VERCEL_DEV_RUNNING === "1" && routerHost && forwardedHost !== routerHost) {
@@ -31,11 +21,14 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(target);
   }
 
-  if (!isAuthorized(request)) {
-    return new NextResponse("Authentication required", {
-      headers: { "WWW-Authenticate": `Basic realm="${REALM}", charset="UTF-8"` },
-      status: 401,
-    });
+  const { pathname } = request.nextUrl;
+  // Agent routes enforce the same cookie through the channel auth in agent/channels/eve.ts.
+  if (pathname.startsWith("/_next/") || pathname.startsWith("/eve/") || PUBLIC_PATHS.includes(pathname)) {
+    return NextResponse.next();
+  }
+
+  if (!(await isAuthorized(request))) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
   return NextResponse.next();
 }
