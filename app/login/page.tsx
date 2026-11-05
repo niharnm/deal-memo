@@ -27,7 +27,9 @@ export default async function LoginPage({
         />
         {error ? (
           <p className="text-destructive text-sm" role="alert">
-            Wrong password. Try again.
+            {error === "locked"
+              ? "Too many attempts. Try again in 15 minutes."
+              : "Wrong password. Try again."}
           </p>
         ) : null}
         <Button type="submit">Enter</Button>

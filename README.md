@@ -67,8 +67,10 @@ The production app sits behind a single shared password so only invited people c
 | Variable | Purpose |
 | --- | --- |
 | `DEMO_PASSWORD` | Shared password for the login page |
+| `DEMO_SESSION_SECRET` | Optional random server-side secret mixed into the session cookie. Rotating it signs everyone out without changing the password |
+| `DEMO_SESSION_VERSION` | Optional string; change it to revoke all sessions |
 
-If it's missing, production rejects every request. Changing it signs everyone out.
+If it's missing, production rejects every request. Changing it signs everyone out. Failed logins are limited to 5 per client per 15 minutes, tracked in server memory (per instance on serverless hosts), so add a platform rate-limit rule on `/api/login` for a hard limit.
 
 ## Limits
 
